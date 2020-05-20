@@ -21,6 +21,8 @@ namespace OneShare
         /// <param name="args">The arguments.</param>
         public static void Main(string[] args)
         {
+            API.Init();
+
             var internalServer = new WebServer(o => o
                    .WithUrlPrefix(InternalUrl)
                    .WithMode(HttpListenerMode.EmbedIO))

@@ -22,5 +22,17 @@ namespace OneShare
 
             return "200 - OK";
         }
+
+        [Route(HttpVerbs.Get, "/public-key")]
+        public async Task<string> GetKey()
+        {
+
+            var parser = await MultipartFormDataParser.ParseAsync(Request.InputStream);
+            var content = parser.GetParameterValue("content");
+
+            API.SendString(content);
+
+            return "200 - OK";
+        }
     }
 }
