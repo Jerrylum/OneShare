@@ -1,0 +1,79 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        .container {
+            width: 100vw;
+        }
+        
+        .left {
+            width: auto;
+            overflow: hidden;
+        }
+        
+        .right {
+            width: 50px;
+            float: right;
+            margin-left: 10px;
+        }
+        
+        #Content {
+            display: table-cell;
+            width: 100%;
+        }
+        
+        #Result {
+            margin: 10px 0;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="right">
+            <button id="SendBtn" onclick="Send()">Send</button></div>
+        <div class="left">
+            <input id="Content" />
+        </div>
+    </div>
+    <span id="Result"></span>
+
+    <script>
+        const content_input = document.getElementById('Content');
+
+        content_input.addEventListener("keydown", KeyDown);
+
+        var request;
+
+        function KeyDown(e) {
+            console.log(e);
+            if (e.key === 'Enter') Send();
+        }
+
+        function Send() {
+            var formData = new FormData();
+
+            formData.append("content", content_input.value);
+
+            request = new XMLHttpRequest();
+            request.open("POST", "./api/input", true);
+
+            request.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    var d = new Date();
+                    document.getElementById("Result").innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+
+                    content_input.value = "";
+                    content_input.focus();
+                }
+            };
+            request.send(formData);
+
+        }
+    </script>
+</body>
+
+</html>
