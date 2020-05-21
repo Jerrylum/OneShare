@@ -1,0 +1,50 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        .container {
+            width: 100vw;
+        }
+        
+        .left {
+            width: auto;
+            overflow: hidden;
+        }
+        
+        .right {
+            width: 50px;
+            float: right;
+            margin-left: 10px;
+        }
+        
+        #Content {
+            display: table-cell;
+            width: 100%;
+        }
+        
+        #Result {
+            margin: 10px 0;
+            display: block;
+        }
+    </style>
+    <script src="api/public-key"></script>
+    <script src="encrypt.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="right">
+            <button id="SendBtn" onclick="Send()">Send</button></div>
+        <div class="left">
+            <input id="Content" />
+        </div>
+    </div>
+    <span id="Result"></span>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

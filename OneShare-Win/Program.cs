@@ -21,11 +21,21 @@ namespace OneShare
         /// <param name="args">The arguments.</param>
         public static void Main(string[] args)
         {
-            API.Init();
+            API.RSA.Init();
+
+            //var t = TripleDES.createDESCrypto("0123456789012345", "00000000");
+
+
+            //byte[] plain = Encoding.ASCII.GetBytes("Hello World");
+            //byte[] en = TripleDES.Encrypt(plain, t);
+            //byte[] de = TripleDES.Decrypt(en, t);
+            //Console.WriteLine(API.ByteArrayToHexString(en));
+            //Console.WriteLine(API.ByteArrayToString(de));
 
             var internalServer = new WebServer(o => o
                    .WithUrlPrefix(InternalUrl)
                    .WithMode(HttpListenerMode.EmbedIO))
+               .WithLocalSessionManager()
                .WithStaticFolder("/", "internal", true);
             ServerBasicSetup(internalServer);
             internalServer.RunAsync();
@@ -33,8 +43,9 @@ namespace OneShare
             var externalServer = new WebServer(o => o
                    .WithUrlPrefix(ExternalUrl)
                    .WithMode(HttpListenerMode.EmbedIO))
-               .WithStaticFolder("/", "external", true)
-               .WithWebApi("/api", m => m.WithController<ExternalController>());
+               .WithLocalSessionManager()
+               .WithWebApi("/api", m => m.WithController<ExternalController>())
+               .WithStaticFolder("/", "external", true);
             ServerBasicSetup(externalServer);
             externalServer.RunAsync();
 
@@ -50,7 +61,8 @@ namespace OneShare
 
         private static void ServerBasicSetup(WebServer server)
         {
-            server.HandleHttpException(async (ctx, ex) => {
+            server.HandleHttpException(async (ctx, ex) =>
+            {
                 ctx.Response.StatusCode = ex.StatusCode;
 
                 switch (ex.StatusCode)
