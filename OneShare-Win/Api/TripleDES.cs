@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OneShare.Object;
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
@@ -6,18 +7,20 @@ namespace OneShare.API
 {
     public class TripleDES
     {
-        public static Dictionary<string, TripleDESCryptoServiceProvider> UserDict = new Dictionary<string, TripleDESCryptoServiceProvider>();
+        public static Dictionary<string, UserProfile> UserDict = new Dictionary<string, UserProfile>();
 
         public static TripleDESCryptoServiceProvider createDESCrypto(String key, String iv)
         {
             byte[] keyArray = API.Encoding.HexStringToBytArray(key);
             byte[] ivArray = API.Encoding.HexStringToBytArray(iv);
 
-            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
-            tdes.Key = keyArray;
-            tdes.Mode = CipherMode.CBC;
-            tdes.Padding = PaddingMode.PKCS7;
-            tdes.IV = ivArray;
+            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider
+            {
+                Key = keyArray,
+                Mode = CipherMode.CBC,
+                Padding = PaddingMode.PKCS7,
+                IV = ivArray
+            };
 
             return tdes;
         }

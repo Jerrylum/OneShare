@@ -44,7 +44,7 @@ namespace OneShare.API
 
         public static string ByteArrayToString(byte[] result)
         {
-            return System.Text.Encoding.Default.GetString(result);
+            return System.Text.Encoding.UTF8.GetString(result);
         }
 
         public static byte[] StringToByteArray(string str)

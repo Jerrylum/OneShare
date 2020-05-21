@@ -45,7 +45,7 @@ namespace OneShare
                    .WithMode(HttpListenerMode.EmbedIO))
                .WithLocalSessionManager()
                .WithWebApi("/api", m => m.WithController<ExternalController>())
-               .WithStaticFolder("/", "external", true);
+               .WithStaticFolder("/", "external", false); // TODO set false
             ServerBasicSetup(externalServer);
             externalServer.RunAsync();
 

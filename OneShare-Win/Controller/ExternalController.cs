@@ -2,8 +2,10 @@
 using EmbedIO.Routing;
 using EmbedIO.WebApi;
 using HttpMultipartParser;
+using OneShare.Object;
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,15 +16,55 @@ namespace OneShare
     public class ExternalController : WebApiController
     {
         [Route(HttpVerbs.Post, "/input")]
-        public async Task<string> PostInput()
+        public async Task PostInput()
         {
-
             var parser = await MultipartFormDataParser.ParseAsync(Request.InputStream);
-            var content = parser.GetParameterValue("content");
+            var type = parser.GetParameterValue("type");
+            var user_id = parser.GetParameterValue("user_id");
+            var msg_id = parser.GetParameterValue("msg_id");
 
-            API.Keyboard.SendString(content);
+            UserProfile profile;
+            if (!API.TripleDES.UserDict.TryGetValue(user_id, out profile))
+                throw HttpException.BadRequest();
 
-            return "200 - OK";
+            if (msg_id != profile.next_msg_id)
+                throw HttpException.BadRequest();
+
+            // ----------------------------------------
+
+            var crypto = profile.crypto;
+            var all = parser.Files;
+            if (all.Count != 1)
+                throw HttpException.BadRequest();
+
+            Stream sourceStream = all[0].Data;
+            byte[] rawBytes = API.TripleDES.Decrypt(API.Encoding.ReadFully(sourceStream), crypto);
+
+            // ----------------------------------------
+
+            if (type == "string")
+            {
+                string content = API.Encoding.ByteArrayToString(rawBytes);
+
+                API.Keyboard.SendString(content);
+            }
+
+            // ----------------------------------------
+
+            string next_msg_id = API.Util.GetRandomHexString(4);
+
+            profile.next_msg_id = next_msg_id;
+
+            string pong = msg_id + ";" + next_msg_id;
+
+            string pongEncrypted = API.Encoding.ByteArrayToHexString(
+                                       API.TripleDES.Encrypt(
+                                           API.Encoding.StringToByteArray(pong),
+                                           crypto)
+                                       );
+
+            await HttpContext.SendStringAsync(pongEncrypted, "text/plain", Encoding.UTF8);
+            return;
         }
 
         [Route(HttpVerbs.Post, "/register")]
@@ -49,7 +91,9 @@ namespace OneShare
 
             var crypto = API.TripleDES.createDESCrypto(key, iv);
 
-            string helloRaw = "hello " + userid;
+            string next_msg_id = API.Util.GetRandomHexString(4);
+
+            string helloRaw = userid + ";" + next_msg_id;
 
             string helloEncrypted = API.Encoding.ByteArrayToHexString(
                                         API.TripleDES.Encrypt(
@@ -60,35 +104,12 @@ namespace OneShare
 
             // ----------------------------------------
 
-            API.TripleDES.UserDict.Add(userid, crypto);
+
+            API.TripleDES.UserDict.Add(userid, new UserProfile() { userid = userid, crypto = crypto, next_msg_id = next_msg_id });
 
             await HttpContext.SendStringAsync(helloEncrypted, "text/plain", Encoding.UTF8);
             return;
         }
-
-
-        [Route(HttpVerbs.Post, "/test")]
-        public async Task<string> PostTest()
-        {
-
-            var parser = await MultipartFormDataParser.ParseAsync(Request.InputStream);
-            var all = parser.Files;
-
-            if (all.Count != 1) throw HttpException.BadRequest();
-
-            Stream sourceStream = all[0].Data;
-
-
-
-            byte[] Bytes = API.Encoding.ReadFully(sourceStream);
-
-            Console.WriteLine(API.Encoding.ByteArrayToHexString(Bytes));
-
-
-
-            return "200 - OK";
-        }
-
 
         [Route(HttpVerbs.Get, "/public-key")]
         public async Task GetKey()

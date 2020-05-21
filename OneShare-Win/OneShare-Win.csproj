@@ -100,12 +100,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Encoding.cs" />
-    <Compile Include="ExternalController.cs" />
+    <Compile Include="Api\Encoding.cs" />
+    <Compile Include="Api\Util.cs" />
+    <Compile Include="Controller\ExternalController.cs" />
+    <Compile Include="Object\UserProfile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RSA.cs" />
-    <Compile Include="TripleDES.cs" />
+    <Compile Include="Api\RSA.cs" />
+    <Compile Include="Api\TripleDES.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -125,7 +127,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Keyboard.cs" />
+    <Compile Include="Api\Keyboard.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

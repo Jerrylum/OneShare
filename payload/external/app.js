@@ -2,54 +2,60 @@
 
 const content_input = document.getElementById('Content');
 
-var des_info, user_id;
+let des_info, user_id, next_msg_Id;
 
 function KeyDown(e) {
-    console.log(e);
-    if (e.key === 'Enter') Send();
+    if (e.key === 'Enter') SendString();
 }
 
-function Send() {
+function SendString() {
     let formData = new FormData();
 
-    formData.append("content", content_input.value);
+    formData.append('type', 'string');
+    formData.append('user_id', user_id);
+    formData.append('msg_id', next_msg_Id); // now
+    formData.append('content', stringToBlob(encryptDES(content_input.value, des_info).toString()));
 
 
     let request;
 
     request = new XMLHttpRequest();
-    request.open("POST", "./api/input", true);
+    request.open('POST', './api/input', true);
 
     request.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            let d = new Date();
-            document.getElementById("Result").innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        if (this.readyState == 4) {
+            try {
+                let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
+                let splitted = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8).split(';');
+                let rtn_now_msg_id = splitted[0];
+                let rtn_next_msg_id = splitted[1];
 
-            content_input.value = "";
-            content_input.focus();
+                if (rtn_now_msg_id != next_msg_Id) {
+                    throw new Error();
+                }
+
+                next_msg_Id = rtn_next_msg_id;
+
+                let d = new Date();
+                document.getElementById('Result').innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+
+                content_input.value = '';
+                content_input.focus();
+
+            } catch {
+                alert('Oh no!!!');
+            }
         }
     };
     request.send(formData);
-}
-
-
-function TestSend() {
-    let formData = new FormData();
-
-    formData.append("content", encryptDES("Hello World", randomDES()));
-
-
-    let request;
-
-    request = new XMLHttpRequest();
-    request.open("POST", "./api/test", true);
-    request.send(formData);
 
 }
+
+function getMsgId() { return { now: next_msg_Id, next: (next_msg_Id = random16Hex()) }; };
 
 function random16Hex() { return (0x10000 | Math.random() * 0x10000).toString(16).substr(1); }
 
-function random64Hex() { return random16Hex() + random16Hex() + random16Hex() + random16Hex() + ""; }
+function random64Hex() { return random16Hex() + random16Hex() + random16Hex() + random16Hex() + ''; }
 
 function random128Hex() { return random64Hex() + random64Hex(); }
 
@@ -59,44 +65,44 @@ function randomDES() {
 
 function stringToBlob(str) {
     // the first byte ignored, add 00 for padding
-    var str = "00" + str;
-    var hexStr = str.slice(2);
-    var buf = new ArrayBuffer(hexStr.length / 2);
-    var byteBuf = new Uint8Array(buf);
+    str = '00' + str;
+    let hexStr = str.slice(2);
+    let buf = new ArrayBuffer(hexStr.length / 2);
+    let byteBuf = new Uint8Array(buf);
     for (let i = 0; i < hexStr.length; i += 2) {
         byteBuf[i / 2] = parseInt(hexStr.slice(i, i + 2), 16);
     }
-    var blob = new Blob([byteBuf], { type: "application/octet-stream" });
+    let blob = new Blob([byteBuf], { type: 'application/octet-stream' });
 
     return blob;
 }
 
 
 function encryptRSA(plain) {
-    var encrypt = new JSEncrypt();
+    let encrypt = new JSEncrypt();
     encrypt.setPublicKey(PUBLICKEY);
-    var encrypted = encrypt.getKey().encrypt(plain); // return hex
+    let encrypted = encrypt.getKey().encrypt(plain); // return hex
 
     return stringToBlob(encrypted);
 }
 
 
 function encryptDES(plain, desInfo) { // plain: crypto-word
-    var encrypted = CryptoJS.TripleDES.encrypt(plain, desInfo.key, {
+    let encrypted = CryptoJS.TripleDES.encrypt(plain, desInfo.key, {
         iv: desInfo.iv,
         mode: CryptoJS.mode.CBC, //ECB
         padding: CryptoJS.pad.Pkcs7
     });
 
-    console.log('加密：', encrypted.toString());
+    //console.log('加密：', encrypted.toString());
 
     return encrypted;
 
     // return stringToBlob(encrypted.toString()); // return blob
 }
 
-function decryptDES(encrypted, desInfo) {
-    var dencrypted = CryptoJS.TripleDES.decrypt(encrypted, desInfo.key, {
+function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
+    let dencrypted = CryptoJS.TripleDES.decrypt({ ciphertext: encrypted }, desInfo.key, {
         iv: desInfo.iv,
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
@@ -112,48 +118,43 @@ function decryptDES(encrypted, desInfo) {
 }
 
 (function() {
-    content_input.addEventListener("keydown", KeyDown);
+    content_input.addEventListener('keydown', KeyDown);
 
     des_info = randomDES();
     user_id = random64Hex();
-    const registerMessage = encryptRSA(`${user_id};${des_info.key};${des_info.iv}`);
+    const registerMessage = encryptRSA(`${user_id};${des_info.key};${des_info.iv};${next_msg_Id}`);
 
     let formData = new FormData();
 
-    formData.append("content", registerMessage);
+    formData.append('content', registerMessage);
 
 
     let request;
 
     request = new XMLHttpRequest();
-    request.open("POST", "./api/register", false); // sync
+    request.open('POST', './api/register', false); // sync
 
     request.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            var expected = encryptDES("hello " + user_id, des_info).toString();
-            if (expected != this.responseText) alert("Oh no!!!");
+        if (this.readyState == 4) {
+            // try {
+            let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
+            let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
+            let splitted = rtnRaw.split(';');
+            let rtn_user_id = splitted[0];
+            let rtn_next_msg_id = splitted[1];
+
+            if (rtn_user_id != user_id) {
+                throw new Error();
+            }
+
+            next_msg_Id = rtn_next_msg_id;
+
+            // } catch {
+            //     alert('Oh no!!!');
+            // }
         }
     };
     request.send(formData);
 
-
-    // var key = "0123456789012345";
-    // var s = "Hello World";
-
-    // var base64 = CryptoJS.enc.Utf8.parse(key)
-    // console.log('base64:', base64)
-    // var encrypted = CryptoJS.TripleDES.encrypt(s, base64, {
-    //     iv: CryptoJS.enc.Utf8.parse('00000000'),
-    //     mode: CryptoJS.mode.CBC, //ECB
-    //     padding: CryptoJS.pad.Pkcs7
-    // });
-    // console.log('加密：', encrypted.toString());
-
-    // var Dencrypted = CryptoJS.TripleDES.decrypt(encrypted, base64, {
-    //     iv: CryptoJS.enc.Utf8.parse('00000000'),
-    //     mode: CryptoJS.mode.CBC,
-    //     padding: CryptoJS.pad.Pkcs7
-    // });
-    // console.log('解密：', Dencrypted.toString(CryptoJS.enc.Utf8));
 
 })();
