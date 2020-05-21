@@ -11,10 +11,13 @@ function KeyDown(e) {
 function SendString() {
     let formData = new FormData();
 
-    formData.append('type', 'string');
     formData.append('user_id', user_id);
-    formData.append('msg_id', next_msg_Id); // now
-    formData.append('content', stringToBlob(encryptDES(content_input.value, des_info).toString()));
+
+    // bit: | 3 byte | 4 byte | ....
+    //      |  type  | msg id | data
+    var content = encryptDES('str' + next_msg_Id + content_input.value, des_info).toString();
+
+    formData.append('content', stringToBlob(content));
 
 
     let request;
@@ -94,7 +97,7 @@ function encryptDES(plain, desInfo) { // plain: crypto-word
         padding: CryptoJS.pad.Pkcs7
     });
 
-    //console.log('加密：', encrypted.toString());
+    console.log('加密：', encrypted.toString());
 
     return encrypted;
 
@@ -136,22 +139,22 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
 
     request.onreadystatechange = function() {
         if (this.readyState == 4) {
-            // try {
-            let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
-            let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
-            let splitted = rtnRaw.split(';');
-            let rtn_user_id = splitted[0];
-            let rtn_next_msg_id = splitted[1];
+            try {
+                let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
+                let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
+                let splitted = rtnRaw.split(';');
+                let rtn_user_id = splitted[0];
+                let rtn_next_msg_id = splitted[1];
 
-            if (rtn_user_id != user_id) {
-                throw new Error();
+                if (rtn_user_id != user_id) {
+                    throw new Error();
+                }
+
+                next_msg_Id = rtn_next_msg_id;
+
+            } catch {
+                alert('Oh no!!!');
             }
-
-            next_msg_Id = rtn_next_msg_id;
-
-            // } catch {
-            //     alert('Oh no!!!');
-            // }
         }
     };
     request.send(formData);

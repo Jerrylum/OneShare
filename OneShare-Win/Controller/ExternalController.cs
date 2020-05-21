@@ -19,32 +19,30 @@ namespace OneShare
         public async Task PostInput()
         {
             var parser = await MultipartFormDataParser.ParseAsync(Request.InputStream);
-            var type = parser.GetParameterValue("type");
             var user_id = parser.GetParameterValue("user_id");
-            var msg_id = parser.GetParameterValue("msg_id");
+
+            var all = parser.Files;
+            if (all.Count != 1)
+                throw HttpException.BadRequest();
 
             UserProfile profile;
             if (!API.TripleDES.UserDict.TryGetValue(user_id, out profile))
                 throw HttpException.BadRequest();
 
-            if (msg_id != profile.next_msg_id)
-                throw HttpException.BadRequest();
-
             // ----------------------------------------
 
             var crypto = profile.crypto;
-            var all = parser.Files;
-            if (all.Count != 1)
-                throw HttpException.BadRequest();
+            MsgRequest req = new MsgRequest(crypto, all[0].Data);
 
-            Stream sourceStream = all[0].Data;
-            byte[] rawBytes = API.TripleDES.Decrypt(API.Encoding.ReadFully(sourceStream), crypto);
+
+            if (req.MsgId != profile.next_msg_id)
+                throw HttpException.BadRequest();
 
             // ----------------------------------------
 
-            if (type == "string")
+            if (req.Type == "str")
             {
-                string content = API.Encoding.ByteArrayToString(rawBytes);
+                string content = API.Encoding.ByteArrayToString(req.Data);
 
                 API.Keyboard.SendString(content);
             }
@@ -55,7 +53,7 @@ namespace OneShare
 
             profile.next_msg_id = next_msg_id;
 
-            string pong = msg_id + ";" + next_msg_id;
+            string pong = req.MsgId + ";" + next_msg_id;
 
             string pongEncrypted = API.Encoding.ByteArrayToHexString(
                                        API.TripleDES.Encrypt(

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace OneShare.API
 {
-    public class Util
+    public static class Util
     {
         private static Random random = new Random();
 
@@ -18,6 +18,17 @@ namespace OneShare.API
             if (digits % 2 == 0)
                 return result;
             return result + random.Next(16).ToString("X");
+        }
+
+
+        public static byte[] Slice(this byte[] bytes, int from, int len)
+        {
+            byte[] rtnBytes = new byte[len];
+            for (int i = 0; i < len; i++)
+            {
+                rtnBytes[i] = bytes[from + i];
+            }
+            return rtnBytes;
         }
     }
 }
