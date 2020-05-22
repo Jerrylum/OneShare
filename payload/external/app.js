@@ -125,7 +125,7 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
 
     des_info = randomDES();
     user_id = random64Hex();
-    const registerMessage = encryptRSA(`${user_id};${des_info.key};${des_info.iv};${next_msg_Id}`);
+    const registerMessage = encryptRSA(`${user_id};${des_info.key};${des_info.iv}`);
 
     let formData = new FormData();
 
