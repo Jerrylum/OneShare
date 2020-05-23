@@ -4,15 +4,17 @@ namespace OneShare
     using System;
     using System.Text;
     using System.Threading;
+    using System.Threading.Tasks;
     using EmbedIO;
     using EmbedIO.Files;
     using EmbedIO.WebApi;
-
+    using OneShare.Module;
 
     public class Program
     {
-        private const string InternalUrl = "http://localhost:8080/";
+        private const string InternalUrl = "http://localhost:8887/";
         private const string ExternalUrl = "http://+:8888/";
+        private const string ExternalWebSocketUrl = "http://+:8889/";
 
 
         /// <summary>
@@ -32,22 +34,30 @@ namespace OneShare
             //Console.WriteLine(API.ByteArrayToHexString(en));
             //Console.WriteLine(API.ByteArrayToString(de));
 
-            var internalServer = new WebServer(o => o
-                   .WithUrlPrefix(InternalUrl)
-                   .WithMode(HttpListenerMode.EmbedIO))
-               .WithLocalSessionManager()
-               .WithStaticFolder("/", "internal", true);
-            ServerBasicSetup(internalServer);
-            internalServer.RunAsync();
+            //var internalServer = new WebServer(o => o
+            //       .WithUrlPrefix(InternalUrl)
+            //       .WithMode(HttpListenerMode.EmbedIO))
+            //   .WithLocalSessionManager()
+            //   .WithStaticFolder("/", "internal", true);
+            //ServerBasicSetup(internalServer);
+            //internalServer.RunAsync();
 
             var externalServer = new WebServer(o => o
                    .WithUrlPrefix(ExternalUrl)
                    .WithMode(HttpListenerMode.EmbedIO))
                .WithLocalSessionManager()
                .WithWebApi("/api", m => m.WithController<ExternalController>())
-               .WithStaticFolder("/", "external", false); // TODO set false
+               .WithStaticFolder("/", "external", false); // Add static files after other modules to avoid conflicts
             ServerBasicSetup(externalServer);
             externalServer.RunAsync();
+
+            var externalWebSocketServer = new WebServer(o => o
+                   .WithUrlPrefix(ExternalWebSocketUrl)
+                   .WithMode(HttpListenerMode.EmbedIO))
+               .WithLocalSessionManager()
+               .WithModule(new WebSocketInputModule("/default"));
+            ServerBasicSetup(externalWebSocketServer);
+            externalWebSocketServer.RunAsync();
 
             //var browser = new System.Diagnostics.Process()
             //{

@@ -103,6 +103,7 @@
     <Compile Include="Api\Encoding.cs" />
     <Compile Include="Api\Util.cs" />
     <Compile Include="Controller\ExternalController.cs" />
+    <Compile Include="Module\WebSocketInputModule.cs" />
     <Compile Include="Object\UserProfile.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

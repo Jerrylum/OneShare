@@ -2,13 +2,15 @@
 
 const content_input = document.getElementById('Content');
 
-let des_info, user_id, next_msg_Id;
+let des_info, user_id, next_msg_Id, ws;
 
 function KeyDown(e) {
     if (e.key === 'Enter') SendString();
 }
 
 function SendString() {
+    content_input.focus();
+
     let formData = new FormData();
 
     formData.append('user_id', user_id);
@@ -17,40 +19,44 @@ function SendString() {
     //      |  type  | msg id | data
     var content = encryptDES('str' + next_msg_Id + content_input.value, des_info).toString();
 
-    formData.append('content', stringToBlob(content));
+    ws.send(content);
+
+    // formData.append('content', stringToBlob(content));
 
 
-    let request;
+    // let request;
 
-    request = new XMLHttpRequest();
-    request.open('POST', './api/input', true);
+    // request = new XMLHttpRequest();
+    // request.open('POST', './api/input', true);
 
-    request.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            try {
-                let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
-                let splitted = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8).split(';');
-                let rtn_now_msg_id = splitted[0];
-                let rtn_next_msg_id = splitted[1];
+    // request.onreadystatechange = function() {
 
-                if (rtn_now_msg_id != next_msg_Id) {
-                    throw new Error();
-                }
 
-                next_msg_Id = rtn_next_msg_id;
+    //     if (this.readyState == 4) {
+    //         document.querySelector("meta[name='theme-color']").setAttribute("content", "red");
+    //         try {
+    //             let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
+    //             let splitted = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8).split(';');
+    //             let rtn_now_msg_id = splitted[0];
+    //             let rtn_next_msg_id = splitted[1];
 
-                let d = new Date();
-                document.getElementById('Result').innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+    //             if (rtn_now_msg_id != next_msg_Id) {
+    //                 throw new Error();
+    //             }
 
-                content_input.value = '';
-                content_input.focus();
+    //             next_msg_Id = rtn_next_msg_id;
 
-            } catch {
-                alert('Oh no!!!');
-            }
-        }
-    };
-    request.send(formData);
+    //             let d = new Date();
+    //             //document.getElementById('Result').innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+
+    //             content_input.value = '';
+
+    //         } catch {
+    //             alert('Oh no!!!');
+    //         }
+    //     }
+    // };
+    // request.send(formData);
 
 }
 
@@ -66,7 +72,7 @@ function randomDES() {
     return { key: CryptoJS.enc.Hex.parse(random128Hex()), iv: CryptoJS.enc.Hex.parse(random64Hex()) };
 }
 
-function stringToBlob(str) {
+function HexStrToBlob(str) {
     // the first byte ignored, add 00 for padding
     str = '00' + str;
     let hexStr = str.slice(2);
@@ -86,7 +92,7 @@ function encryptRSA(plain) {
     encrypt.setPublicKey(PUBLICKEY);
     let encrypted = encrypt.getKey().encrypt(plain); // return hex
 
-    return stringToBlob(encrypted);
+    return HexStrToBlob(encrypted);
 }
 
 
@@ -123,41 +129,81 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
 (function() {
     content_input.addEventListener('keydown', KeyDown);
 
-    des_info = randomDES();
-    user_id = random64Hex();
-    const registerMessage = encryptRSA(`${user_id};${des_info.key};${des_info.iv}`);
 
-    let formData = new FormData();
+    // let formData = new FormData();
 
-    formData.append('content', registerMessage);
+    // formData.append('content', registerMessage);
 
 
-    let request;
+    // let request;
 
-    request = new XMLHttpRequest();
-    request.open('POST', './api/register', false); // sync
+    // request = new XMLHttpRequest();
+    // request.open('POST', './api/register', false); // sync
 
-    request.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            try {
-                let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
-                let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
-                let splitted = rtnRaw.split(';');
-                let rtn_user_id = splitted[0];
-                let rtn_next_msg_id = splitted[1];
+    // request.onreadystatechange = function() {
+    //     if (this.readyState == 4) {
+    //         try {
+    //             let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
+    //             let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
+    //             let splitted = rtnRaw.split(';');
+    //             let rtn_user_id = splitted[0];
+    //             let rtn_next_msg_id = splitted[1];
 
-                if (rtn_user_id != user_id) {
-                    throw new Error();
-                }
+    //             if (rtn_user_id != user_id) {
+    //                 throw new Error();
+    //             }
 
-                next_msg_Id = rtn_next_msg_id;
+    //             next_msg_Id = rtn_next_msg_id;
 
-            } catch {
-                alert('Oh no!!!');
+    //         } catch {
+    //             alert('Oh no!!!');
+    //         }
+    //     }
+    // };
+    // request.send(formData);
+
+
+    ws = new WebSocket('ws://' + window.location.hostname + ':' + (window.location.port - 0 + 1) + '/default')
+
+    ws.onopen = () => {
+        console.log('open connection')
+
+
+        des_info = randomDES();
+        const registerMessage = encryptRSA(`reg;${des_info.key};${des_info.iv}`);
+
+        ws.send(registerMessage);
+    }
+
+    ws.onclose = () => {
+        console.log('close connection')
+    }
+
+    //接收 Server 發送的訊息
+    ws.onmessage = event => {
+        let encrypted = CryptoJS.enc.Hex.parse(event.data);
+        let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
+
+        let splitted = rtnRaw.split(';');
+        let a = splitted[0];
+        let b = splitted[1];
+        let c = splitted[2];
+
+        if (user_id == undefined) {
+            if (a == 'acc') {
+                user_id = b
+                next_msg_Id = c;
+            }
+        } else {
+            if (a == 'res') {
+                if (b == next_msg_Id)
+                    next_msg_Id = c;
+                else
+                    console.log("Oh nooo");
+            } else if (a == 'msg') {
+                console.log("HAHA>" + b + ">" + c);
             }
         }
-    };
-    request.send(formData);
-
+    }
 
 })();

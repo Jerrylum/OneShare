@@ -26,7 +26,7 @@ namespace OneShare.API
             }
         }
 
-        public static byte[] HexStringToBytArray(string hex)
+        public static byte[] HexStringToByteArray(string hex)
         {
             return Enumerable.Range(0, hex.Length)
                      .Where(x => x % 2 == 0)

@@ -1,125 +1,13 @@
+<!DOCTYPE html>
 <html>
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="application-name" content="OneShare">
+    <meta name="theme-color" content="slateblue">
+    <meta name="description" content="Share information in a local area network">
 
-    <style>
-        body {
-            background-color: #D8DBD6;
-            margin: 0;
-            font-family: Segoe UI;
-        }
-        
-        @media only screen and (max-width: 600px) {
-            .container {
-                background-color: white;
-                display: table;
-                /* padding: 10px; */
-                width: 100%;
-                height: 100%;
-            }
-            .sub-container {
-                height: 100%;
-                display: table-row;
-            }
-            .msg-box-container {
-                position: fixed;
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-            }
-            .header {
-                width: 100%;
-                height: 50px;
-                background-color: slateblue;
-            }
-        }
-        
-        @media only screen and (min-width: 601px) {
-            .container {
-                width: 75%;
-                height: 50%;
-                position: relative;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                background-color: white;
-                /* padding: 20px; */
-                border-radius: 10px;
-                min-height: 700px;
-                max-width: 800px;
-                display: table;
-            }
-            .sub-container {
-                height: 100%;
-                display: table-row;
-            }
-            .msg-box-container {
-                position: fixed;
-                bottom: 20px;
-                left: 20px;
-                right: 20px;
-            }
-            .header {
-                width: 100%;
-                height: 50px;
-                background-color: slateblue;
-                border-radius: 10px 10px 0 0;
-            }
-        }
-        
-        .header p {
-            line-height: 50px;
-            font-size: 24px;
-            font-family: Segoe UI;
-            color: white;
-            margin: 0 20px;
-        }
-        
-        .history-body {
-            /* background-color: aqua; */
-            width: 100%;
-            position: fixed;
-            bottom: 70px;
-            top: 50px;
-            height: auto;
-            /* left: 20px; */
-            /* right: 20px; */
-        }
-        
-        .left {
-            width: auto;
-            overflow: hidden;
-        }
-        
-        .right {
-            width: 60px;
-            float: right;
-            margin-left: 10px;
-        }
-        
-        #Content {
-            display: table-cell;
-            width: 100%;
-            font-size: 20px;
-            border: 1px solid #777;
-            border-radius: 10px;
-            outline: none;
-            padding: 1px 8px;
-        }
-        
-        #Result {
-            margin: 10px 0;
-            display: block;
-        }
-        
-        #SendBtn {
-            width: 60px;
-            height: 27px;
-            border: 1px solid #777;
-            border-radius: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="app.css">
     <script src="api/public-key"></script>
     <script src="encrypt.js"></script>
 
@@ -131,18 +19,39 @@
             <p>OneShare</p>
         </div>
         <div class="sub-container">
-            <div class="history-body">
+            <div class="chat-history">
+                <ul>
+                    <li class="other-message">
+                        <div class="message-data">
+                            <span class="message-data-name">Vincent</span>
+                            <span class="message-data-time">10:12 AM, Today</span>
+                        </div>
+                        <div class="message">
+                            Are we meeting today? Project has been already finished and I have results to show you.
+                        </div>
+                    </li>
+
+                    <li class="clearfix my-message">
+
+                        <div class="message-data">
+                            <span class="message-data-time">10:10 AM, Today</span> &nbsp; &nbsp;
+                            <span class="message-data-name">Olia</span>
+                        </div>
+                        <div class="message">
+                            Hi Vincent, how are you? How is the project coming along?
+                        </div>
+                    </li>
+
+                </ul>
 
             </div>
-            <div class="msg-box-container">
-                <div class="right">
-                    <button id="SendBtn" onclick="SendString()">Send</button></div>
-                <div class="left">
-                    <input id="Content" />
-                </div>
+            <div class="chat-message">
+                <textarea id="Content" placeholder="Type your message" rows="3"></textarea>
+                <button onclick="SendString()">Send</button>
             </div>
-            <span id="Result"></span>
         </div>
+        <span id="Result"></span>
+    </div>
 
     </div>
 

@@ -11,8 +11,8 @@ namespace OneShare.API
 
         public static TripleDESCryptoServiceProvider createDESCrypto(String key, String iv)
         {
-            byte[] keyArray = API.Encoding.HexStringToBytArray(key);
-            byte[] ivArray = API.Encoding.HexStringToBytArray(iv);
+            byte[] keyArray = API.Encoding.HexStringToByteArray(key);
+            byte[] ivArray = API.Encoding.HexStringToByteArray(iv);
 
             TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider
             {
