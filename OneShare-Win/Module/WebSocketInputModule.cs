@@ -78,11 +78,7 @@ namespace OneShare.Module
 
                 string helloRaw = "acc;" + user_id + ";" + next_msg_id;
 
-                string helloEncrypted = API.Encoding.ByteArrayToHexString(
-                                            API.TripleDES.Encrypt(
-                                                API.Encoding.StringToByteArray(helloRaw),
-                                                crypto)
-                                            );
+                string helloEncrypted = API.Util.StringToEncryptHex(helloRaw, crypto);
 
 
                 API.TripleDES.UserDict.Add(user_id, new UserProfile() { userid = user_id, crypto = crypto, next_msg_id = next_msg_id });
@@ -100,8 +96,7 @@ namespace OneShare.Module
                     UserProfile profile;
                     if (API.TripleDES.UserDict.TryGetValue(recipient.HttpContextId, out profile))
                     {
-                        byte[] encrypted = API.TripleDES.Encrypt(payload, profile.crypto);
-                        SendAsync(recipient, API.Encoding.ByteArrayToHexString(encrypted));
+                        SendAsync(recipient, API.Util.ByteArrayToEncryptHex(payload, profile.crypto));
                     }
                 }
             }

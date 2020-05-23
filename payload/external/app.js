@@ -5,59 +5,54 @@ const content_input = document.getElementById('Content');
 let des_info, user_id, next_msg_Id, ws;
 
 function KeyDown(e) {
-    if (e.key === 'Enter') SendString();
+    if (typeof window.orientation === 'undefined') { // PC
+        if (e.key === 'Enter' && !e.shiftKey)
+            SendString();
+    }
 }
 
 function SendString() {
     content_input.focus();
 
-    let formData = new FormData();
+    if (user_id != undefined) { // registed
+        // bit: | 3 byte | 4 byte | ....
+        //      |  type  | msg id | data
+        var content = encryptDES('str' + next_msg_Id + content_input.value, des_info).toString();
 
-    formData.append('user_id', user_id);
+        ws.send(content);
 
-    // bit: | 3 byte | 4 byte | ....
-    //      |  type  | msg id | data
-    var content = encryptDES('str' + next_msg_Id + content_input.value, des_info).toString();
+        DisplayMyMessage(user_id.slice(0, 6), content_input.value);
+    }
+}
 
-    ws.send(content);
+function DisplayMyMessage(username, msg) {
+    let now = new Date();
 
-    // formData.append('content', stringToBlob(content));
+    let node = document.createElement('li');
+    node.classList.add('clearfix', 'my-message');
+    node.innerHTML = `<div class="message-data noselect">
+                          <span class="message-data-time">${new Date().toTimeString().split(' ')[0]}</span> &nbsp; &nbsp;
+                          <span class="message-data-name">${username}</span>
+                      </div>
+                      <div class="message">${msg}</div>`
 
+    document.querySelector('.chat-history ul').appendChild(node);
+    node.scrollIntoView();
+}
 
-    // let request;
+function DisplayOtherMessage(username, msg) {
+    let now = new Date();
 
-    // request = new XMLHttpRequest();
-    // request.open('POST', './api/input', true);
+    let node = document.createElement('li');
+    node.classList.add('other-message');
+    node.innerHTML = `<div class="message-data noselect">
+                          <span class="message-data-name">${username}</span> &nbsp; &nbsp;
+                          <span class="message-data-time">${new Date().toTimeString().split(' ')[0]}</span>
+                      </div>
+                      <div class="message">${msg}</div>`;
 
-    // request.onreadystatechange = function() {
-
-
-    //     if (this.readyState == 4) {
-    //         document.querySelector("meta[name='theme-color']").setAttribute("content", "red");
-    //         try {
-    //             let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
-    //             let splitted = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8).split(';');
-    //             let rtn_now_msg_id = splitted[0];
-    //             let rtn_next_msg_id = splitted[1];
-
-    //             if (rtn_now_msg_id != next_msg_Id) {
-    //                 throw new Error();
-    //             }
-
-    //             next_msg_Id = rtn_next_msg_id;
-
-    //             let d = new Date();
-    //             //document.getElementById('Result').innerText = `Send @ ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
-
-    //             content_input.value = '';
-
-    //         } catch {
-    //             alert('Oh no!!!');
-    //         }
-    //     }
-    // };
-    // request.send(formData);
-
+    document.querySelector('.chat-history ul').appendChild(node);
+    node.scrollIntoView();
 }
 
 function getMsgId() { return { now: next_msg_Id, next: (next_msg_Id = random16Hex()) }; };
@@ -129,40 +124,6 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
 (function() {
     content_input.addEventListener('keydown', KeyDown);
 
-
-    // let formData = new FormData();
-
-    // formData.append('content', registerMessage);
-
-
-    // let request;
-
-    // request = new XMLHttpRequest();
-    // request.open('POST', './api/register', false); // sync
-
-    // request.onreadystatechange = function() {
-    //     if (this.readyState == 4) {
-    //         try {
-    //             let encrypted = CryptoJS.enc.Hex.parse(this.responseText);
-    //             let rtnRaw = decryptDES(encrypted, des_info).toString(CryptoJS.enc.Utf8);
-    //             let splitted = rtnRaw.split(';');
-    //             let rtn_user_id = splitted[0];
-    //             let rtn_next_msg_id = splitted[1];
-
-    //             if (rtn_user_id != user_id) {
-    //                 throw new Error();
-    //             }
-
-    //             next_msg_Id = rtn_next_msg_id;
-
-    //         } catch {
-    //             alert('Oh no!!!');
-    //         }
-    //     }
-    // };
-    // request.send(formData);
-
-
     ws = new WebSocket('ws://' + window.location.hostname + ':' + (window.location.port - 0 + 1) + '/default')
 
     ws.onopen = () => {
@@ -196,12 +157,13 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
             }
         } else {
             if (a == 'res') {
-                if (b == next_msg_Id)
+                if (b == next_msg_Id) {
+                    content_input.value = '';
                     next_msg_Id = c;
-                else
-                    console.log("Oh nooo");
+                } else
+                    console.log('Oh nooo');
             } else if (a == 'msg') {
-                console.log("HAHA>" + b + ">" + c);
+                DisplayOtherMessage(b.slice(0, 6), c);
             }
         }
     }
