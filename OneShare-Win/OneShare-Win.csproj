@@ -162,6 +162,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>del $(TargetDir)\*.xml</PostBuildEvent>
+    <PostBuildEvent>del $(TargetDir)*.xml
+Xcopy /E /I /Y $(SolutionDir)payload $(TargetDir)
+</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>
