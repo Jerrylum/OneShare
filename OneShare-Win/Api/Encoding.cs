@@ -10,8 +10,6 @@ namespace OneShare.API
 
     public class Encoding
     {
-        public static object ASCII { get; internal set; }
-
         public static byte[] ReadFully(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];

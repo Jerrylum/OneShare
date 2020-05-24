@@ -19,7 +19,7 @@ namespace OneShare
         [Route(HttpVerbs.Get, "/public-key")]
         public async Task GetKey()
         {
-            await HttpContext.SendStringAsync($"const PUBLICKEY = '{API.RSA.PublicKey}'", "text/javascript", Encoding.UTF8);
+            await HttpContext.SendStringAsync(API.RSA.PublicKey, "text/plain", Encoding.UTF8);
             return;
         }
     }

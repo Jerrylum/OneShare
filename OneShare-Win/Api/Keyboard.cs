@@ -3,12 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace OneShare.API
 {
     public class Keyboard
     {
+
+        public static void SetClipboard(string s)
+        {
+            Thread thread = new Thread(() => Clipboard.SetText(s));
+            thread.SetApartmentState(ApartmentState.STA); //Set the thread to STA
+            thread.Start();
+            thread.Join();
+        }
     
         /// <summary>
         /// Synthesizes keystrokes corresponding to the specified Unicode string,
@@ -83,6 +93,9 @@ namespace OneShare.API
         const uint MOUSEEVENTF_WHEEL = 0x0800;
         const uint MOUSEEVENTF_VIRTUALDESK = 0x4000;
         const uint MOUSEEVENTF_ABSOLUTE = 0x8000;
+
+        public static bool EnableClipboard = false;
+        public static bool EnableAutoTyping = true;
 
         struct INPUT
         {

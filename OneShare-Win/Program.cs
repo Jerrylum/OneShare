@@ -5,88 +5,35 @@ namespace OneShare
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Windows.Forms;
     using EmbedIO;
     using EmbedIO.Files;
     using EmbedIO.WebApi;
+    using OneShare.API;
     using OneShare.Module;
 
     public class Program
     {
-        private const string InternalUrl = "http://localhost:8887/";
-        private const string ExternalUrl = "http://+:8888/";
-        private const string ExternalWebSocketUrl = "http://+:8889/";
-
+        public static OptionsForm OptionsForm;
 
         /// <summary>
         /// Defines the entry point of the application.
         /// </summary>
         /// <param name="args">The arguments.</param>
+        [STAThread]
         public static void Main(string[] args)
         {
             API.RSA.Init();
+            API.Server.StartServer();
 
-            //var t = TripleDES.createDESCrypto("0123456789012345", "00000000");
 
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
-            //byte[] plain = Encoding.ASCII.GetBytes("Hello World");
-            //byte[] en = TripleDES.Encrypt(plain, t);
-            //byte[] de = TripleDES.Decrypt(en, t);
-            //Console.WriteLine(API.ByteArrayToHexString(en));
-            //Console.WriteLine(API.ByteArrayToString(de));
-
-            //var internalServer = new WebServer(o => o
-            //       .WithUrlPrefix(InternalUrl)
-            //       .WithMode(HttpListenerMode.EmbedIO))
-            //   .WithLocalSessionManager()
-            //   .WithStaticFolder("/", "internal", true);
-            //ServerBasicSetup(internalServer);
-            //internalServer.RunAsync();
-
-            var externalServer = new WebServer(o => o
-                   .WithUrlPrefix(ExternalUrl)
-                   .WithMode(HttpListenerMode.EmbedIO))
-               .WithLocalSessionManager()
-               .WithWebApi("/api", m => m.WithController<ExternalController>())
-               .WithStaticFolder("/", "external", false); // Add static files after other modules to avoid conflicts
-            ServerBasicSetup(externalServer);
-            externalServer.RunAsync();
-
-            var externalWebSocketServer = new WebServer(o => o
-                   .WithUrlPrefix(ExternalWebSocketUrl)
-                   .WithMode(HttpListenerMode.EmbedIO))
-               .WithLocalSessionManager()
-               .WithModule(new WebSocketInputModule("/default"));
-            ServerBasicSetup(externalWebSocketServer);
-            externalWebSocketServer.RunAsync();
-
-            //var browser = new System.Diagnostics.Process()
-            //{
-            //    StartInfo = new System.Diagnostics.ProcessStartInfo(InternalUrl) { UseShellExecute = true }
-            //};
-            //browser.Start();
-
-            Console.ReadKey(true);
+            Application.Run(OptionsForm = new OptionsForm());
 
         }
 
-        private static void ServerBasicSetup(WebServer server)
-        {
-            server.HandleHttpException(async (ctx, ex) =>
-            {
-                ctx.Response.StatusCode = ex.StatusCode;
-
-                switch (ex.StatusCode)
-                {
-                    case 404:
-                        await ctx.SendStringAsync("404 Not Found", "text/html", Encoding.UTF8);
-                        break;
-                    default:
-                        // Handle other HTTP Status codes or call the default handler 'SendStandardHtmlAsync'
-                        await ctx.SendStandardHtmlAsync(ex.StatusCode);
-                        break;
-                }
-            });
-        }
 
     }
 }

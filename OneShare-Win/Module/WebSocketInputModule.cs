@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace OneShare.Module
 {
@@ -20,6 +21,7 @@ namespace OneShare.Module
         }
 
         /// <inheritdoc />
+        [STAThread]
         protected override Task OnMessageReceivedAsync(IWebSocketContext context,
                                                        byte[] rxBuffer,
                                                        IWebSocketReceiveResult rxResult)
@@ -45,7 +47,11 @@ namespace OneShare.Module
                 {
                     string content = API.Encoding.ByteArrayToString(req.Data);
 
-                    API.Keyboard.SendString(content);
+                    if (API.Keyboard.EnableAutoTyping)
+                        API.Keyboard.SendString(content);
+
+                    if (API.Keyboard.EnableClipboard)
+                        API.Keyboard.SetClipboard(content);
                 }
 
                 // ----------------------------------------
@@ -63,6 +69,10 @@ namespace OneShare.Module
                 // ----------------------------------------
 
                 byte[] bytes = API.RSA.RSADecrypt(rxBuffer);
+
+                if (bytes == null)
+                    return Task.CompletedTask;
+
                 string[] splitted = API.Encoding.ByteArrayToString(bytes).Split(';');
 
                 string type = splitted[0], key = splitted[1], iv = splitted[2];
@@ -87,6 +97,14 @@ namespace OneShare.Module
             }
         }
 
+
+
+        public IReadOnlyList<IWebSocketContext> GetActiveContexts()
+        {
+            return ActiveContexts;
+        }
+
+
         private void SendToOthersAsync(IWebSocketContext sender, byte[] payload)
         {
             foreach (var recipient in ActiveContexts)
@@ -100,9 +118,7 @@ namespace OneShare.Module
                     }
                 }
             }
-
-
+            //
         }
-
     }
 }

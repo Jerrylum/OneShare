@@ -2,7 +2,7 @@
 
 const content_input = document.getElementById('Content');
 
-let des_info, user_id, next_msg_Id, ws;
+let des_info, user_id, next_msg_Id, ws, PUBLICKEY;
 
 function KeyDown(e) {
     if (typeof window.orientation === 'undefined') { // PC
@@ -87,6 +87,8 @@ function encryptRSA(plain) {
     encrypt.setPublicKey(PUBLICKEY);
     let encrypted = encrypt.getKey().encrypt(plain); // return hex
 
+    console.log('RSA加密：', encrypted);
+
     return HexStrToBlob(encrypted);
 }
 
@@ -121,23 +123,32 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
     // return decryptedArray8;
 }
 
-(function() {
-    content_input.addEventListener('keydown', KeyDown);
-
+function createConnection() {
     ws = new WebSocket('ws://' + window.location.hostname + ':' + (window.location.port - 0 + 1) + '/default')
 
     ws.onopen = () => {
-        console.log('open connection')
+        console.log('open connection');
 
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                PUBLICKEY = this.responseText;
 
-        des_info = randomDES();
-        const registerMessage = encryptRSA(`reg;${des_info.key};${des_info.iv}`);
+                user_id = undefined;
+                des_info = randomDES();
+                const registerMessage = encryptRSA(`reg;${des_info.key};${des_info.iv}`);
 
-        ws.send(registerMessage);
+                ws.send(registerMessage);
+            }
+        };
+        xhttp.open("GET", "/api/public-key", true);
+        xhttp.send();
     }
 
     ws.onclose = () => {
-        console.log('close connection')
+        console.log('close connection');
+
+        setTimeout(() => createConnection(), 1000);
     }
 
     //接收 Server 發送的訊息
@@ -160,12 +171,18 @@ function decryptDES(encrypted, desInfo) { // encrypted: crypto-word
                 if (b == next_msg_Id) {
                     content_input.value = '';
                     next_msg_Id = c;
-                } else
+                } else {
                     console.log('Oh nooo');
+                }
             } else if (a == 'msg') {
                 DisplayOtherMessage(b.slice(0, 6), c);
             }
         }
     }
+}
 
+(function() {
+    content_input.addEventListener('keydown', KeyDown);
+
+    createConnection();
 })();
